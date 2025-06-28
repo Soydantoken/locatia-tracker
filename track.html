@@ -23,7 +23,15 @@
   const cihazID = urlParams.get('id') || 'cihaz1';
 
   const now = new Date().toISOString();
-  await set(ref(db, 'takipEt/' + cihazID), { aktif: true, zaman: now });
+
+  // await yerine set().then() kullan
+  set(ref(db, 'takipEt/' + cihazID), { aktif: true, zaman: now })
+    .then(() => {
+      console.log("Takip başlatıldı:", cihazID);
+    })
+    .catch((err) => {
+      console.error("Takip başlatılamadı:", err.message);
+    });
 </script>
 </body>
 </html>
