@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Locatia - Konum Takip ve Güncelleme</title>
+</head>
+<body>
+  <h2>📍 Canlı Konum</h2>
+  <div id="location">Yükleniyor...</div>
+
+  <h3>✏️ Konumu Güncelle</h3>
+  <form id="updateForm">
+    <label>Enlem (lat): <input type="number" step="any" id="lat" required></label><br>
+    <label>Boylam (lng): <input type="number" step="any" id="lng" required></label><br>
+    <button type="submit">Konumu Kaydet</button>
+  </form>
+
+  <p id="status" style="color: green;"></p>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-analytics.js";
+    import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyC6zrIIOd4-7dYGTqMYT7aPIij19Pl12PM",
+      authDomain: "locatia-tracker.firebaseapp.com",
+      databaseURL: "https://locatia-tracker-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "locatia-tracker",
+      storageBucket: "locatia-tracker.firebasestorage.app",
+      messagingSenderId: "547895294949",
+      appId: "1:547895294949:web:daebfbe0f3a8ac76538d0c",
+      measurementId: "G-Z6B8T8P3YY"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+    const db = getDatabase(app);
+    const konumRef = ref(db, 'konum');
+
+    // Mevcut konumu göster
+    onValue(konumRef, (snapshot) => {
+      const data = snapshot.val();
+      document.getElementById("location").innerText =
+        data ? `Enlem: ${data.lat}, Boylam: ${data.lng}` : "Veri yok.";
+    });
+
+    // Konumu güncelle
+    document.getElementById("updateForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const lat = parseFloat(document.getElementById("lat").value);
+      const lng = parseFloat(document.getElementById("lng").value);
+      set(konumRef, { lat, lng })
+        .then(() => {
+          document.getElementById("status").innerText = "✅ Konum başarıyla güncellendi.";
+        })
+        .catch((error) => {
+          document.getElementById("status").innerText = "❌ Hata: " + error.message;
+        });
+    });
+  </script>
+</body>
+</html>
