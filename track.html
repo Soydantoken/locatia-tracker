@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head><meta charset="UTF-8"><title>Yönlendiriliyor...</title></head>
+<body style="display:none;">
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+  import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyC6zrIIOd4-7dYGTqMYT7aPIij19Pl12PM",
+    authDomain: "locatia-tracker.firebaseapp.com",
+    databaseURL: "https://locatia-tracker-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "locatia-tracker",
+    storageBucket: "locatia-tracker.firebasestorage.app",
+    messagingSenderId: "547895294949",
+    appId: "1:547895294949:web:daebfbe0f3a8ac76538d0c"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const cihazID = urlParams.get('id') || 'cihaz1';
+
+  const now = new Date().toISOString();
+  await set(ref(db, 'takipEt/' + cihazID), { aktif: true, zaman: now });
+
+  // İsteğe bağlı yönlendirme (görünmeyen sayfa için yok)
+</script>
+</body>
+</html>

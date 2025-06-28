@@ -2,37 +2,25 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <title>Locatia - GPS Takip</title>
+  <title>Locatia - Takip Paneli (Gizli Mod)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
-    h2 { color: darkred; }
-    #map { width: 100%; height: 300px; margin: 10px 0; border: 1px solid #ccc; }
-    input, button { width: 100%; padding: 8px; margin: 5px 0; }
+    #map { width: 100%; height: 300px; margin-top: 15px; border: 1px solid #ccc; }
   </style>
 </head>
 <body>
-  <h2>📍 Canlı Konum</h2>
-  <div id="location">Yükleniyor...</div>
-  <div id="map"></div>
-
-  <div id="adminSection" style="display: none;">
-    <h3>✏️ Konumu Güncelle (Yalnızca Yönetici)</h3>
-    <form id="updateForm">
-      <input type="number" step="any" id="lat" placeholder="Enlem (lat)" required>
-      <input type="number" step="any" id="lng" placeholder="Boylam (lng)" required>
-      <button type="submit">Konumu Kaydet</button>
-    </form>
-    <p id="status" style="color: green;"></p>
-  </div>
+  <h2>📍 Takip Paneli</h2>
+  <div id="status">Takip başlatılmadı...</div>
+  <div id="map" style="display:none;"></div>
 
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDzKsNEF_739S8lntVvHzNpKqWv_B1_KaA"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
-    import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
 
     const firebaseConfig = {
-      apiKey: "AIzaSyDzKsNEF_739S8lntVvHzNpKqWv_B1_KaA",
+      apiKey: "AIzaSyC6zrIIOd4-7dYGTqMYT7aPIij19Pl12PM",
       authDomain: "locatia-tracker.firebaseapp.com",
       databaseURL: "https://locatia-tracker-default-rtdb.europe-west1.firebasedatabase.app",
       projectId: "locatia-tracker",
@@ -43,55 +31,36 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const konumRef = ref(db, 'konum');
+
+    const cihazID = 'cihaz1';
+    const takipRef = ref(db, 'takipEt/' + cihazID);
+    const konumRef = ref(db, 'takipci/' + cihazID);
 
     let map, marker;
+
     function initMap(lat, lng) {
-      const position = { lat, lng };
+      const pos = { lat, lng };
       map = new google.maps.Map(document.getElementById("map"), {
-        zoom: 14,
-        center: position,
+        zoom: 15,
+        center: pos,
       });
-      marker = new google.maps.Marker({
-        position,
-        map,
-      });
+      marker = new google.maps.Marker({ position: pos, map });
     }
 
-    onValue(konumRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        document.getElementById("location").innerText =
-          `Enlem: ${data.lat}, Boylam: ${data.lng}`;
-        initMap(data.lat, data.lng);
+    onValue(takipRef, (snapshot) => {
+      const takip = snapshot.val();
+      if (takip?.aktif) {
+        document.getElementById("status").innerText = "Takip Aktif!";
+        document.getElementById("map").style.display = "block";
+
+        onValue(konumRef, (snap) => {
+          const data = snap.val();
+          if (data?.lat && data?.lng) {
+            initMap(data.lat, data.lng);
+          }
+        });
       }
     });
-
-    const adminEmail = "enginsoydan@makromakine.com";
-    const currentUserEmail = localStorage.getItem("adminEmail");
-
-    if (currentUserEmail === adminEmail) {
-      document.getElementById("adminSection").style.display = "block";
-    }
-
-    document.getElementById("updateForm").addEventListener("submit", (e) => {
-      e.preventDefault();
-      const lat = parseFloat(document.getElementById("lat").value);
-      const lng = parseFloat(document.getElementById("lng").value);
-      set(konumRef, { lat, lng })
-        .then(() => {
-          document.getElementById("status").innerText = "✅ Konum başarıyla güncellendi.";
-        })
-        .catch((error) => {
-          document.getElementById("status").innerText = "❌ Hata: " + error.message;
-        });
-    });
-
-    if (!currentUserEmail) {
-      const mail = prompt("Yöneticiyseniz e-posta adresinizi girin:");
-      localStorage.setItem("adminEmail", mail);
-      location.reload();
-    }
   </script>
 </body>
 </html>
