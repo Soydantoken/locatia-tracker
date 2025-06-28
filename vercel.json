@@ -1,0 +1,6 @@
+
+{
+  "routes": [
+    { "src": "/track.html", "dest": "/track.html" }
+  ]
+}
