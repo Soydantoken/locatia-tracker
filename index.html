@@ -2,24 +2,33 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
-  <title>Locatia - Konum Takip ve Güncelleme</title>
+  <title>Locatia - GPS Takip</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+    h2 { color: darkred; }
+    #map { width: 100%; height: 300px; margin: 10px 0; border: 1px solid #ccc; }
+    input, button { width: 100%; padding: 8px; margin: 5px 0; }
+  </style>
 </head>
 <body>
   <h2>📍 Canlı Konum</h2>
   <div id="location">Yükleniyor...</div>
+  <div id="map"></div>
 
-  <h3>✏️ Konumu Güncelle</h3>
-  <form id="updateForm">
-    <label>Enlem (lat): <input type="number" step="any" id="lat" required></label><br>
-    <label>Boylam (lng): <input type="number" step="any" id="lng" required></label><br>
-    <button type="submit">Konumu Kaydet</button>
-  </form>
+  <div id="adminSection" style="display: none;">
+    <h3>✏️ Konumu Güncelle (Yalnızca Yönetici)</h3>
+    <form id="updateForm">
+      <input type="number" step="any" id="lat" placeholder="Enlem (lat)" required>
+      <input type="number" step="any" id="lng" placeholder="Boylam (lng)" required>
+      <button type="submit">Konumu Kaydet</button>
+    </form>
+    <p id="status" style="color: green;"></p>
+  </div>
 
-  <p id="status" style="color: green;"></p>
-
+  <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_GOOGLE_MAPS_API_KEY"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-analytics.js";
     import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-database.js";
 
     const firebaseConfig = {
@@ -29,23 +38,42 @@
       projectId: "locatia-tracker",
       storageBucket: "locatia-tracker.firebasestorage.app",
       messagingSenderId: "547895294949",
-      appId: "1:547895294949:web:daebfbe0f3a8ac76538d0c",
-      measurementId: "G-Z6B8T8P3YY"
+      appId: "1:547895294949:web:daebfbe0f3a8ac76538d0c"
     };
 
     const app = initializeApp(firebaseConfig);
-    const analytics = getAnalytics(app);
     const db = getDatabase(app);
     const konumRef = ref(db, 'konum');
 
-    // Mevcut konumu göster
+    let map, marker;
+    function initMap(lat, lng) {
+      const position = { lat, lng };
+      map = new google.maps.Map(document.getElementById("map"), {
+        zoom: 14,
+        center: position,
+      });
+      marker = new google.maps.Marker({
+        position,
+        map,
+      });
+    }
+
     onValue(konumRef, (snapshot) => {
       const data = snapshot.val();
-      document.getElementById("location").innerText =
-        data ? `Enlem: ${data.lat}, Boylam: ${data.lng}` : "Veri yok.";
+      if (data) {
+        document.getElementById("location").innerText =
+          `Enlem: ${data.lat}, Boylam: ${data.lng}`;
+        initMap(data.lat, data.lng);
+      }
     });
 
-    // Konumu güncelle
+    const adminEmail = "enginsoydan@makromakine.com";
+    const currentUserEmail = localStorage.getItem("adminEmail");
+
+    if (currentUserEmail === adminEmail) {
+      document.getElementById("adminSection").style.display = "block";
+    }
+
     document.getElementById("updateForm").addEventListener("submit", (e) => {
       e.preventDefault();
       const lat = parseFloat(document.getElementById("lat").value);
@@ -58,6 +86,12 @@
           document.getElementById("status").innerText = "❌ Hata: " + error.message;
         });
     });
+
+    if (!currentUserEmail) {
+      const mail = prompt("Yöneticiyseniz e-posta adresinizi girin:");
+      localStorage.setItem("adminEmail", mail);
+      location.reload();
+    }
   </script>
 </body>
 </html>
